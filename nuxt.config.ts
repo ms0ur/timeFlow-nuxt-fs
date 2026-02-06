@@ -30,12 +30,6 @@ export default defineNuxtConfig({
     '/auth/**': { ssr: true }
   },
 
-  nitro: {
-    externals: {
-      traceInclude: ['@libsql/linux-x64-musl']
-    }
-  },
-
   compatibilityDate: '2025-01-15',
 
   eslint: {
