@@ -36,6 +36,8 @@ RUN npm install --omit=dev
 
 # Copy built application (no chown needed for root)
 COPY --from=builder /app/.output ./.output
+# Copy migrations
+COPY --from=builder /app/drizzle ./drizzle
 
 # Create data directory for SQLite
 RUN mkdir -p /data
