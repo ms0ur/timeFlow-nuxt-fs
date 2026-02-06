@@ -8,19 +8,17 @@ RUN apk add --no-cache python3 make g++ git
 WORKDIR /app
 
 # Copy package files
-COPY package.json bun.lock* ./
+COPY package.json ./
 
-# Install bun
-RUN npm install -g bun
-
-# Install dependencies
-RUN bun install --frozen-lockfile
+# Install dependencies (using npm to ensure native modules are built correctly)
+# We skip the lockfile to ensure platform-specific optional dependencies (like libsql-musl) are installed
+RUN npm install
 
 # Copy source files
 COPY . .
 
 # Build the application
-RUN bun run build
+RUN npm run build
 
 # Production stage
 FROM node:22-alpine AS runner

@@ -14,6 +14,13 @@ export default defineNuxtConfig({
     enabled: true
   },
 
+  nitro: {
+    externals: {
+      inline: ['bcryptjs'],
+      traceInclude: ['@libsql/client', '@libsql/linux-x64-musl']
+    }
+  },
+
   css: ['~/assets/css/main.css'],
 
   // Runtime config for env variables
