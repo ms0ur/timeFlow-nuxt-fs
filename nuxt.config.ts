@@ -17,7 +17,7 @@ export default defineNuxtConfig({
   nitro: {
     externals: {
       inline: ['bcryptjs'],
-      traceInclude: ['@libsql/client', '@libsql/linux-x64-musl']
+      external: ['@libsql/client', '@libsql/linux-x64-musl']
     }
   },
 

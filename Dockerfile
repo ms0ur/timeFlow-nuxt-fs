@@ -32,6 +32,12 @@ RUN adduser --system --uid 1001 nuxt
 
 WORKDIR /app
 
+# Copy package file for production install
+COPY package.json ./
+
+# Install only production dependencies to ensure native modules (like libsql) are present
+RUN npm install --omit=dev
+
 # Copy built application
 COPY --from=builder --chown=nuxt:nodejs /app/.output ./.output
 
