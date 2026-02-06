@@ -7,6 +7,7 @@
         "@iconify-json/lucide": "^1.2.87",
         "@iconify-json/simple-icons": "^1.2.68",
         "@libsql/client": "^0.17.0",
+        "@libsql/linux-x64-musl": "^0.5.22",
         "@nuxt/a11y": "1.0.0-alpha.1",
         "@nuxt/hints": "1.0.0-alpha.6",
         "@nuxt/icon": "2.2.1",
