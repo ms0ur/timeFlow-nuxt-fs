@@ -1,0 +1,48 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Build output
+.output
+.nuxt
+dist
+
+# Dev files
+.git
+.gitignore
+*.md
+!README.md
+!DOCKER.md
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Test
+coverage
+.nyc_output
+
+# Data (will be mounted as volume)
+data
+*.db
+
+# Docker files (not needed inside container)
+Dockerfile*
+docker-compose*

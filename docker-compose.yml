@@ -1,0 +1,24 @@
+services:
+  timeflow:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: timeflow-app
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:${PORT:-3000}"
+    environment:
+      - NODE_ENV=production
+      - HOST=127.0.0.1
+      - PORT=${PORT:-3000}
+      - DATABASE_URL=file:/data/timeflow.db
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
+    volumes:
+      # Persistent database storage on host filesystem
+      - ./data:/data
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:${PORT:-3000}/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
