@@ -26,10 +26,6 @@ FROM node:22-alpine AS runner
 # Install dumb-init for proper PID 1 handling
 RUN apk add --no-cache dumb-init
 
-# Create non-root user
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nuxt
-
 WORKDIR /app
 
 # Copy package file for production install
@@ -38,11 +34,11 @@ COPY package.json ./
 # Install only production dependencies to ensure native modules (like libsql) are present
 RUN npm install --omit=dev
 
-# Copy built application
-COPY --from=builder --chown=nuxt:nodejs /app/.output ./.output
+# Copy built application (no chown needed for root)
+COPY --from=builder /app/.output ./.output
 
 # Create data directory for SQLite
-RUN mkdir -p /data && chown nuxt:nodejs /data
+RUN mkdir -p /data
 
 # Set environment variables
 ENV NODE_ENV=production
@@ -53,8 +49,5 @@ ENV DATABASE_URL=file:/data/timeflow.db
 # Expose port (can be overridden)
 EXPOSE ${PORT}
 
-# Switch to non-root user
-USER nuxt
-
-# Start the application
+# Start the application as root
 CMD ["dumb-init", "node", ".output/server/index.mjs"]
