@@ -6,14 +6,33 @@ definePageMeta({
 const { user, logout, requireAuth, updateUser } = useAuth()
 const { activities, defaultActivity, updateActivity, fetchActivities } = useActivities()
 const { accentColors, applyAccentColor } = useAccentColor()
+const { weekStartDay, dayStartHour, offlineMode, updateSettings, setOfflineMode, init: initSettings } = useUserSettings()
 const colorMode = useColorMode()
 const toast = useToast()
 
 const isLoading = ref(false)
 
+// Week day options
+const weekDayOptions = [
+  { value: 0, label: 'Sunday' },
+  { value: 1, label: 'Monday' },
+  { value: 2, label: 'Tuesday' },
+  { value: 3, label: 'Wednesday' },
+  { value: 4, label: 'Thursday' },
+  { value: 5, label: 'Friday' },
+  { value: 6, label: 'Saturday' }
+]
+
+// Hour options (0-23)
+const hourOptions = Array.from({ length: 24 }, (_, i) => ({
+  value: i,
+  label: `${i.toString().padStart(2, '0')}:00`
+}))
+
 onMounted(async () => {
   await requireAuth()
   await fetchActivities()
+  await initSettings()
 })
 
 // Theme toggle
@@ -165,6 +184,55 @@ const displayName = computed(() => {
           <span>Notifications</span>
         </div>
         <span class="text-sm text-muted">Coming soon</span>
+      </div>
+
+      <!-- Week Start Day -->
+      <div class="p-4 rounded-xl bg-elevated">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <UIcon name="i-lucide-calendar" class="w-5 h-5 text-muted" />
+            <span>Week starts on</span>
+          </div>
+          <USelect
+            :model-value="weekStartDay"
+            :items="weekDayOptions"
+            value-key="value"
+            class="w-32"
+            @update:model-value="(v: number) => updateSettings({ weekStartDay: v })"
+          />
+        </div>
+      </div>
+
+      <!-- Day Start Hour -->
+      <div class="p-4 rounded-xl bg-elevated">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <UIcon name="i-lucide-sunrise" class="w-5 h-5 text-muted" />
+            <div>
+              <span>Day starts at</span>
+              <p class="text-xs text-muted">Used for statistics</p>
+            </div>
+          </div>
+          <USelect
+            :model-value="dayStartHour"
+            :items="hourOptions"
+            value-key="value"
+            class="w-24"
+            @update:model-value="(v: number) => updateSettings({ dayStartHour: v })"
+          />
+        </div>
+      </div>
+
+      <!-- Offline Mode -->
+      <div class="p-4 rounded-xl bg-elevated flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <UIcon name="i-lucide-wifi-off" class="w-5 h-5 text-muted" />
+          <div>
+            <span>Offline Mode</span>
+            <p class="text-xs text-muted">Disable sync</p>
+          </div>
+        </div>
+        <USwitch :model-value="offlineMode" @update:model-value="setOfflineMode" />
       </div>
 
       <!-- Data Export (placeholder) -->

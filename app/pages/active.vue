@@ -36,6 +36,7 @@ onMounted(async () => {
 const statsData = ref<{ activities: ActivityStat[]; totalDuration: number } | null>(null)
 
 async function refreshStats() {
+  if (!isOnline.value) return
   try {
     const data = await $fetch('/api/sessions/stats', {
       query: {
@@ -146,16 +147,6 @@ onMounted(() => {
 
 <template>
   <div class="container mx-auto px-4 pb-8">
-    <!-- Offline indicator -->
-    <div
-      v-if="!isOnline"
-      class="fixed top-0 left-0 right-0 bg-warning text-warning-foreground text-center py-2 text-sm z-50"
-    >
-      <UIcon name="i-lucide-wifi-off" class="w-4 h-4 inline mr-1" />
-      Offline mode
-      <span v-if="pendingCount > 0">({{ pendingCount }} pending)</span>
-    </div>
-
     <!-- Timer Display -->
     <div class="flex flex-col items-center justify-center gap-4 py-6">
       <!-- Current Clock -->
@@ -251,6 +242,11 @@ onMounted(() => {
       :stats="statsData?.activities"
       :total-duration="statsData?.totalDuration"
     />
+
+    <!-- Emotion Widget -->
+    <div class="mt-4">
+      <EmotionWidget />
+    </div>
 
     <!-- Activity Picker Drawer -->
     <UDrawer v-model:open="showPicker" title="Switch Activity" direction="bottom">

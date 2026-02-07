@@ -8,6 +8,11 @@ const items = [
     to: '/active'
   },
   {
+    label: 'Emotions',
+    icon: 'i-lucide-heart',
+    to: '/emotions'
+  },
+  {
     label: 'Activities',
     icon: 'i-lucide-folder-tree',
     to: '/activities'

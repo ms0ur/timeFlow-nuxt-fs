@@ -46,6 +46,7 @@ export const sessions = sqliteTable('sessions', {
         .references(() => activities.id, { onDelete: 'cascade' }),
     startedAt: integer('started_at', { mode: 'timestamp' }).notNull(),
     endedAt: integer('ended_at', { mode: 'timestamp' }), // null = currently active
+    description: text('description'), // Optional session notes
     // For offline sync tracking
     localId: text('local_id'), // Client-generated ID for deduplication
     syncedAt: integer('synced_at', { mode: 'timestamp' }),
@@ -75,6 +76,39 @@ export const syncEvents = sqliteTable('sync_events', {
 })
 
 // ============================================
+// EMOTIONS TABLE (Mood tracking)
+// ============================================
+export const emotions = sqliteTable('emotions', {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    userId: integer('user_id')
+        .notNull()
+        .references(() => users.id, { onDelete: 'cascade' }),
+    sessionId: integer('session_id')
+        .references(() => sessions.id, { onDelete: 'set null' }),
+    rating: integer('rating').notNull(), // 1-5 scale
+    description: text('description'),
+    createdAt: integer('created_at', { mode: 'timestamp' })
+        .notNull()
+        .default(sql`(unixepoch())`)
+})
+
+// ============================================
+// USER SETTINGS TABLE
+// ============================================
+export const userSettings = sqliteTable('user_settings', {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    userId: integer('user_id')
+        .notNull()
+        .references(() => users.id, { onDelete: 'cascade' })
+        .unique(),
+    weekStartDay: integer('week_start_day').default(1), // 0=Sunday, 1=Monday...6=Saturday
+    dayStartHour: integer('day_start_hour').default(0), // 0-23
+    updatedAt: integer('updated_at', { mode: 'timestamp' })
+        .notNull()
+        .default(sql`(unixepoch())`)
+})
+
+// ============================================
 // TYPE EXPORTS
 // ============================================
 export type User = typeof users.$inferSelect
@@ -88,3 +122,9 @@ export type NewSession = typeof sessions.$inferInsert
 
 export type SyncEvent = typeof syncEvents.$inferSelect
 export type NewSyncEvent = typeof syncEvents.$inferInsert
+
+export type Emotion = typeof emotions.$inferSelect
+export type NewEmotion = typeof emotions.$inferInsert
+
+export type UserSettings = typeof userSettings.$inferSelect
+export type NewUserSettings = typeof userSettings.$inferInsert

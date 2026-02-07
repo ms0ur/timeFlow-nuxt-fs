@@ -19,9 +19,14 @@ definePageMeta({
 })
 
 const { requireAuth } = useAuth()
+const { isOnline } = useSync()
+const { todayStats: emotionStats, fetchTodayStats: fetchEmotionStats } = useEmotions()
 
 onMounted(async () => {
   await requireAuth()
+  if (isOnline.value) {
+    fetchEmotionStats()
+  }
 })
 
 // Period selection
@@ -32,6 +37,7 @@ const periods = [
 ]
 
 const selectedPeriod = ref('today')
+const activityDepth = ref(0) // 0 = all levels
 
 // Calculate date range based on period
 const dateRange = computed(() => {
@@ -67,16 +73,24 @@ const statsData = ref<{
   dailyBreakdown?: Array<{
     date: string
     totalDuration: number
-    activities: Record<number, number>
+    activities: Array<{ activityId: number; name: string; color: string; duration: number }>
+  }>
+  hourlyBreakdown?: Array<{
+    hour: number
+    duration: number
+    activities: Array<{ activityId: number; name: string; color: string; duration: number }>
   }>
 } | null>(null)
 
 async function fetchStats() {
+  if (!isOnline.value) return
   try {
     const data = await $fetch('/api/sessions/stats', {
       query: {
         start: dateRange.value.start.toISOString(),
-        end: dateRange.value.end.toISOString()
+        end: dateRange.value.end.toISOString(),
+        maxDepth: activityDepth.value,
+        hourly: selectedPeriod.value === 'today' ? 'true' : undefined
       }
     })
     statsData.value = data as typeof statsData.value
@@ -85,9 +99,9 @@ async function fetchStats() {
   }
 }
 
-// Fetch on mount and period change
+// Fetch on mount and changes
 onMounted(() => fetchStats())
-watch(selectedPeriod, () => fetchStats())
+watch([selectedPeriod, activityDepth], () => fetchStats())
 
 function formatDuration(ms: number): string {
   const totalMinutes = Math.floor(ms / 60000)
@@ -158,7 +172,7 @@ const barData = computed(() => {
 
   const labels = statsData.value.dailyBreakdown.map(d => {
     const date = new Date(d.date)
-    return date.toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric' })
+    return date.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' })
   })
 
   return {
@@ -217,7 +231,7 @@ const heatmapData = computed(() => {
   return {
     hours,
     days: days.map(d => ({
-      date: new Date(d.date).toLocaleDateString('ru-RU', { weekday: 'short' }),
+      date: new Date(d.date).toLocaleDateString('en-US', { weekday: 'short' }),
       totalDuration: d.totalDuration
     }))
   }
@@ -247,6 +261,20 @@ function getHeatmapColor(value: number, max: number): string {
         :variant="selectedPeriod === period.value ? 'solid' : 'ghost'"
         size="sm"
         @click="selectedPeriod = period.value"
+      />
+    </div>
+
+    <!-- Activity Depth Selector -->
+    <ActivityDepthSelector 
+      v-model="activityDepth" 
+      :max-depth="3"
+    />
+
+    <!-- Day Timeline (Today only) -->
+    <div v-if="selectedPeriod === 'today' && statsData?.hourlyBreakdown?.length" class="p-6 rounded-2xl bg-elevated">
+      <DayTimeline 
+        :slots="statsData.hourlyBreakdown" 
+        :date="new Date()"
       />
     </div>
 
@@ -340,6 +368,50 @@ function getHeatmapColor(value: number, max: number): string {
             <div class="w-4 h-4 rounded bg-primary/90" />
             <span>More</span>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Emotion Stats Card -->
+    <div v-if="emotionStats && emotionStats.total > 0" class="p-6 rounded-2xl bg-elevated">
+      <div class="flex items-center gap-2 mb-4">
+        <UIcon name="i-lucide-heart" class="w-5 h-5 text-primary" />
+        <h3 class="text-lg font-semibold">Mood Overview</h3>
+      </div>
+      
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <p class="text-sm text-muted">Average Mood</p>
+          <div class="flex items-center gap-2 mt-1">
+            <span v-if="emotionStats.average" class="text-2xl font-bold">
+              {{ emotionStats.average.toFixed(1) }}
+            </span>
+            <span class="text-sm text-muted">/5</span>
+          </div>
+        </div>
+        <div>
+          <p class="text-sm text-muted">Total Entries</p>
+          <p class="text-2xl font-bold mt-1">{{ emotionStats.total }}</p>
+        </div>
+      </div>
+
+      <!-- Distribution bar -->
+      <div class="mt-4">
+        <p class="text-sm text-muted mb-2">Distribution</p>
+        <div class="flex h-4 rounded-full overflow-hidden bg-gray-800">
+          <div
+            v-for="rating in [1, 2, 3, 4, 5]"
+            :key="rating"
+            class="transition-all duration-300"
+            :class="[
+              rating === 1 ? 'bg-red-500' :
+              rating === 2 ? 'bg-orange-500' :
+              rating === 3 ? 'bg-yellow-500' :
+              rating === 4 ? 'bg-lime-500' : 'bg-green-500'
+            ]"
+            :style="{ width: `${(emotionStats.distribution[rating] || 0) / emotionStats.total * 100}%` }"
+            :title="`${rating}/5: ${emotionStats.distribution[rating] || 0} entries`"
+          />
         </div>
       </div>
     </div>
